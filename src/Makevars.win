@@ -1,0 +1,25 @@
+#!/bin/bash
+# [[file:~/Documents/Projects/grassRLink/grassRLink.org::*Makevars.win][Makevars\.win:1]]
+MAJORVERSION=$(cat <<'BABEL_TABLE'
+0
+BABEL_TABLE
+)
+MINORVERSION=$(cat <<'BABEL_TABLE'
+0
+BABEL_TABLE
+)
+PATCHVERSION=$(cat <<'BABEL_TABLE'
+1
+BABEL_TABLE
+)
+GITHASH=$(cat <<'BABEL_TABLE'
+testhash
+BABEL_TABLE
+)
+GITCOMMITDATE=$(cat <<'BABEL_TABLE'
+testdate
+BABEL_TABLE
+)
+## Use the R_HOME indirection to support installations of multiple R version
+PKG_LIBS = $(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" -e "Rcpp:::LdFlags()")
+# Makevars\.win:1 ends here

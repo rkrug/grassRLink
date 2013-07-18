@@ -1,0 +1,11 @@
+Package: grassRLink
+Type: Package
+Title: Directly linking raster (and vector?) read write ccess from R to GRASS spatial database
+Version: 0.0-1
+Date: 2013-07-18_16-30
+Author: Rainer M Krug <Rainer@krugs.de>
+Maintainer: Rainer M Krug <Rainer@krugs.de>
+Description: More about what it does (maybe more than one line)
+License: GPL-3
+Depends: Rcpp (>= 0.10.4)
+LinkingTo: Rcpp  

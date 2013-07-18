@@ -1,0 +1,14 @@
+  .git
+  ^.*\\.org$
+  ^grassRLink.
+  .gitignore
+  library
+  version
+  postTangleScript.sh
+  additional
+
+;; Local Variables:
+;; org-babel-tangled-file: t
+;; buffer-read-only: t
+;; eval:: (auto-revert-mode)
+;; End:

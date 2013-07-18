@@ -3,3 +3,19 @@
 
 # Example code in package build process
 *-Ex.R
+.Rproj.user
+
+.#*
+#*
+*#
+*~
+*.o
+*.so
+*.rds
+
+grassRLink*
+!grassRLink
+/additional
+/example
+
+postTangleScript.sh
