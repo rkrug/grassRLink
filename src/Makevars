@@ -1,6 +1,7 @@
 #!/bin/bash
 ## Use the R_HOME indirection to support installations of multiple R version
-PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"`:/Applications/GRASS/GRASS-7.0.app/Contents/MacOS/include/
+PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"`
+PKG_LIBS = $PKG_LIBS:/Applications/GRASS/GRASS-7.0.app/Contents/MacOS/include/
 
 ## As an alternative, one can also add this code in a file 'configure'
 ##
