@@ -11,9 +11,9 @@
 *~
 *.o
 *.so
-*.rds
+*.rdsg
+*.DS_Store
 
-grassRLink*
 !grassRLink
 /additional
 /example

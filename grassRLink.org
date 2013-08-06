@@ -1,0 +1,703 @@
+# -*- org-babel-tangled-file: t; org-babel-tangle-run-postTangleScript: t; -*-
+
+#+TITLE:     Direct link from R to GRASS
+#+AUTHOR:    Rainer M Krug
+#+EMAIL:     Rainer@krugs.de
+#+DESCRIPTION: R Package to enable the direct access of GRASS rasters
+#+KEYWORDS: 
+
+:CONFIG:
+#+LANGUAGE:  en
+#+OPTIONS:   H:3 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:nil skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+INFOJS_OPT: view:nil toc:nil ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+#+EXPORT_SELECT_TAGS: export
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+LINK_UP:   
+#+LINK_HOME: 
+
+#+TODO: TODO OPTIMIZE TOGET COMPLETE WAIT VERIFY CHECK CODE DOCUMENTATION | DONE RECEIVED CANCELD 
+
+#+STARTUP: indent hidestars nohideblocks
+#+DRAWERS: HIDDEN PROPERTIES STATE CONFIG BABEL OUTPUT LATEXHEADER HTMLHEADER
+#+STARTUP: nohidestars hideblocks
+:END:
+:HTMLHEADER:
+#+begin_html
+  <div id="subtitle" style="float: center; text-align: center;">
+  <p>
+Org-babel support for building 
+  <a href="http://www.r-project.org/">R</a> packages
+  </p>
+  <p>
+  <a href="http://www.r-project.org/">
+  <img src="http://www.r-project.org/Rlogo.jpg"/>
+  </a>
+  </p>
+  </div>
+#+end_html
+:END:
+:LATEXHEADER:
+#+LATEX_HEADER: \usepackage{rotfloat}
+#+LATEX_HEADER: \definecolor{light-gray}{gray}{0.9}
+#+LATEX_HEADER: \lstset{%
+#+LATEX_HEADER:     basicstyle=\ttfamily\footnotesize,       % the font that is used for the code
+#+LATEX_HEADER:     tabsize=4,                       % sets default tabsize to 4 spaces
+#+LATEX_HEADER:     numbers=left,                    % where to put the line numbers
+#+LATEX_HEADER:     numberstyle=\tiny,               % line number font size
+#+LATEX_HEADER:     stepnumber=0,                    % step between two line numbers
+#+LATEX_HEADER:     breaklines=true,                 %!! don't break long lines of code
+#+LATEX_HEADER:     showtabs=false,                  % show tabs within strings adding particular underscores
+#+LATEX_HEADER:     showspaces=false,                % show spaces adding particular underscores
+#+LATEX_HEADER:     showstringspaces=false,          % underline spaces within strings
+#+LATEX_HEADER:     keywordstyle=\color{blue},
+#+LATEX_HEADER:     identifierstyle=\color{black},
+#+LATEX_HEADER:     stringstyle=\color{green},
+#+LATEX_HEADER:     commentstyle=\color{red},
+#+LATEX_HEADER:     backgroundcolor=\color{light-gray},   % sets the background color
+#+LATEX_HEADER:     columns=fullflexible,  
+#+LATEX_HEADER:     basewidth={0.5em,0.4em}, 
+#+LATEX_HEADER:     captionpos=b,                    % sets the caption position to `bottom'
+#+LATEX_HEADER:     extendedchars=false              %!?? workaround for when the listed file is in UTF-8
+#+LATEX_HEADER: }
+:END:
+:BABEL:
+#+PROPERTY: exports code
+#+PROPERTY: comments yes
+#+PROPERTY: padline no
+#+PROPERTY: var MAJORVERSION=0
+#+PROPERTY: var+ MINORVERSION=0
+#+PROPERTY: var+ PATCHVERSION=1
+#+PROPERTY: var+ GITHASH="testhash" 
+#+PROPERTY: var+ GITCOMMITDATE="testdate"
+:END:
+
+* Internal configurations                      :noexport:
+** Evaluate to run post tangle script
+#+begin_src emacs-lisp :results silent :tangle no :exports none
+  (add-hook 'org-babel-post-tangle-hook
+            (
+             lambda () 
+                    (call-process-shell-command "./postTangleScript.sh" nil 0 nil)
+  ;;              (async-shell-command "./postTangleScript.sh")
+  ;;              (ess-load-file (save-window-excursion (replace-regexp-in-string ".org" ".R" buffer-file-name)))))
+  ;;              (ess-load-file "nsa.R")))
+  ;;              (ess-load-file "spreadSim.R")
+                    )
+            )
+#+end_src
+
+** Post tangle script
+:PROPERTIES:
+:tangle: postTangleScript.sh
+:END:
+#+begin_src sh :tangle postTangleScript.sh
+  sed -i '' s/MAJORVERSION/$MAJORVERSION/ ./DESCRIPTION
+  sed -i '' s/MINORVERSION/$MINORVERSION/ ./DESCRIPTION
+  sed -i '' s/PATCHVERSION/$PATCHVERSION/ ./DESCRIPTION
+  sed -i '' s/TODAYSDATE/`date +%Y-%m-%d_%H-%M`/ ./DESCRIPTION
+
+  # sed -i '' s/MAJORVERSION/$MAJORVERSION/ ./seedDisp-package.R
+  # sed -i '' s/MINORVERSION/$MINORVERSION/ ./seedDisp-package.R
+  # sed -i '' s/PATCHVERSION/$PATCHVERSION/ ./seedDisp-package.R
+  # sed -i '' s/TODAYSDATE/`date +%Y-%m-%d_%H-%M`/ ./seedDisp-package.R
+
+  Rscript -e "library(roxygen2);roxygenize('pkg', roxygen.dir='pkg', copy.package=FALSE, unlink.target=FALSE)"
+  # rm -f ./postTangleScript.sh
+#+end_src
+
+#+RESULTS:
+
+
+* gitignore file (./.gitignore)
+:PROPERTIES:
+:tangle: ./.gitignore
+:comments: no
+:no-expand: TRUE
+:shebang:
+:padline: no
+:END: 
+#+begin_src gitignore
+# History files
+.Rhistory
+
+# Example code in package build process
+,*-Ex.R
+.Rproj.user
+
+.#*
+#*
+,*#
+,*~
+,*.o
+,*.so
+*.rdsg
+*.DS_Store
+
+!grassRLink
+/additional
+/example
+
+postTangleScript.sh
+#+end_src
+
+* Git Revision info
+Complete version info
+#+begin_src sh :exports results :results output replace 
+  echo "Version     : " $MAJORVERSION.$MINORVERSION-$PATCHVERSION
+  echo "Commit date : " `git show -s --format="%ci" HEAD`
+  echo "git HASH    : " `git rev-parse HEAD`
+  echo "git status  : "
+  git status
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Version     :  0.0-1
+Commit date :  2013-07-15 05:54:37 -0700
+git HASH    :  14ad72105f717327a3c92b94cf226296ad6db428
+git status  : 
+# On branch master
+# Changes not staged for commit:
+#   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+#
+#	modified:   .gitignore
+#
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#	.Rbuildignore
+#	DESCRIPTION
+#	NAMESPACE
+#	R/
+#	man/
+#	src/
+no changes added to commit (use "git add" and/or "git commit -a")
+#+end_example
+
+
+
+* Rbuildignore file (./.Rbuildignore)
+:PROPERTIES:
+:tangle: ./.Rbuildignore
+:comments: no
+:no-expand: TRUE
+:shebang:
+:padline: no
+:END: 
+#+begin_src fundamental
+  .git
+  ^.*\\.org$
+  ^grassRLink.
+  .gitignore
+  library
+  version
+  postTangleScript.sh
+  additional
+#+end_src
+
+
+
+* Package description
+:PROPERTIES:
+:tangle: ./grassRLink-package.R
+:eval: nil
+:shebang: nil
+:padline: no
+:no-expand: TRUE
+:comments: no
+:END:
+#+begin_src R
+##' Linking R and grass via C library
+##' 
+##' \tabular{ll}{
+##' Package: \tab grassRLink\cr
+##' Type: \tab Package\cr
+##' Version: \tab MAJORVERSION.MINORVERSION.PATCHVERSION\cr
+##' Date: \tab TODAYSDATE\cr
+##' License: \tab GPL (>= 2)\cr
+##' LazyLoad: \tab yes\cr
+##' }
+##'
+##' @docType package
+##' @author Rainer M Krug \email{Rainer@@krugs.de}
+NULL
+#+end_src
+
+* Package Files
+** DESCRIPTION
+:PROPERTIES:
+:tangle:   ./DESCRIPTION
+:padline: no 
+:no-expand: TRUE
+:comments: no
+:END:
+#+begin_src fundamental
+Package: grassRLink
+Type: Package
+Title: Directly linking raster (and vector?) read write ccess from R to GRASS spatial database
+Version: MAJORVERSION.MINORVERSION-PATCHVERSION
+Date: TODAYSDATE
+Author: Rainer M Krug <Rainer@krugs.de>
+Maintainer: Rainer M Krug <Rainer@krugs.de>
+Description: More about what it does (maybe more than one line)
+License: GPL-3
+Depends: Rcpp (>= 0.10.4)
+LinkingTo: Rcpp  
+ #+end_src
+
+** NAMESPACE
+ :PROPERTIES:
+ :tangle:   ./NAMESPACE
+ :padline: no 
+ :no-expand: TRUE
+ :comments: no
+ :END:
+ #+begin_src R
+useDynLib(grassRLink)
+exportPattern("^[[:alpha:]]+")
+#+end_src
+
+#+results:
+
+
+* R directory (./R)
+** readRaster.R
+:PROPERTIES:
+ :tangle:   no
+ :comments: yes
+ :END:
+#+begin_src R 
+##' read grass raster layer, complet or only block
+##'
+##' Reads either a row, column, block or complete raster from
+##' GRASS spatial database.
+##' 
+##' @title readRas
+##' @param name character vector of length one, specifying name of raster layer
+##' @param mapset character vector of length one, specifying mapset of the raster layer
+##' @param row integer vector, specifying the rows to read, NULL if all
+##' @param col integer vector, specifying the columns to read, NULL if all
+##' @return numeric matrix containig the range of 
+##' @author Rainer M. Krug
+readRaster <- function(name, mapset, row, col){
+    .Call( "readRaster", name, mapset, row, col, PACKAGE = "directGRASS" )
+}
+#+end_src
+
+* src directory (./src)
+** Makevars
+:PROPERTIES:
+:tangle: ./src/Makevars
+:results: silent
+:eval: nil
+:no-expand: TRUE
+:comments: no
+:shebang: 
+:END:
+#+begin_src sh
+## Use the R_HOME indirection to support installations of multiple R version
+PKG_LIBS = `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"`
+
+PKG_CXXFLAGS="-I/Applications/GRASS/GRASS-7.0.app/Contents/MacOS/include/"
+## As an alternative, one can also add this code in a file 'configure'
+##
+##    PKG_LIBS=`${R_HOME}/bin/Rscript -e "Rcpp:::LdFlags()"`
+## 
+##    sed -e "s|@PKG_LIBS@|${PKG_LIBS}|" \
+##        src/Makevars.in > src/Makevars
+## 
+## which together with the following file 'src/Makevars.in'
+##
+##    PKG_LIBS = @PKG_LIBS@
+##
+## can be used to create src/Makevars dynamically. This scheme is more
+## powerful and can be expanded to also check for and link with other
+## libraries.  It should be complemented by a file 'cleanup'
+##
+##    rm src/Makevars
+##
+## which removes the autogenerated file src/Makevars. 
+##
+## Of course, autoconf can also be used to write configure files. This is
+## done by a number of packages, but recommended only for more advanced users
+## comfortable with autoconf and its related tools.
+#+end_src
+
+** Makevars.win
+ :PROPERTIES:
+ :tangle: ./src/Makevars.win
+ :results: silent
+ :eval: nil
+ :END:
+#+begin_src sh
+## Use the R_HOME indirection to support installations of multiple R version
+PKG_LIBS = $(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" -e "Rcpp:::LdFlags()")
+#+end_src
+** grassRLink.h
+:PROPERTIES:
+:tangle: ./src/grassRLink.h
+:END:
+#+begin_src c++
+#ifndef _grassRLink_grassRLink_H
+#define _grassRLink_grassRLink_H
+
+#include <Rcpp.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <grass/gis.h>
+#include <grass/raster.h>
+#include <grass/glocale.h>
+
+/*
+ ,* note : RcppExport is an alias to `extern "C"` defined by Rcpp.
+ ,*
+ ,* It gives C calling convention to the rcpp_hello_world function so that 
+ ,* it can be called from .Call in R. Otherwise, the C++ compiler mangles the 
+ ,* name of the function and .Call can't find it.
+ ,*
+ ,* It is only useful to use RcppExport when the function is intended to be called
+ ,* by .Call. See the thread http://thread.gmane.org/gmane.comp.lang.r.rcpp/649/focus=672
+ ,* on Rcpp-devel for a misuse of RcppExport
+ ,*/
+
+using namespace Rcpp;
+
+RcppExport NumericVector readRast(String name, String mapset, int row, int col) ;
+#endif
+#+end_src
+
+** TODO grassRLink.cpp
+:PROPERTIES:
+:tangle: ./src/grassRLink.cpp
+:END:
+#+BEGIN_SRC c++
+#include "grassRLink.h"
+
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+NumericVector readRast(String name, String mapset, int row, int col) {
+  int map_fd;			/* file descriptor */
+  RASTER_MAP_TYPE data_type;	/* type of the map (CELL/DCELL/...) */
+  void *rowbuffer;                 /* input buffer */
+  int nrows, ncols;             /* number of rows and columns of raster*/
+  int nrow, ncol;               /* row and column iterators*/
+
+  /* initialize GIS environment */
+  /* reads grass env, stores program name to G_program_name() */
+  G_gisinit("directReadFromR");  
+
+  /* Rast_open_old - returns file destriptor (>0) */
+  // map_fd = Rast_open_old(name, mapset);
+  map_fd = Rast_open_old("test1", "test2");
+ 
+  /* determine the map type (CELL/FCELL/DCELL) */
+  // data_type = Rast_map_type(name, mapset);
+  data_type = Rast_map_type("test1", "test2");
+
+  /* Allocate input buffer */
+  rowbuffer = Rast_allocate_buf(data_type);
+
+  /* Allocate output buffer, use input map data_type */
+  nrows = Rast_window_rows();
+  ncols = Rast_window_cols();
+
+  /* for each row */
+  for (row = 0; row < nrows; row++) {
+    /* read input map */
+    Rast_get_row(map_fd, rowbuffer, row, data_type);
+
+    /* process the data */
+    for (col = 0; col < ncols; col++) {
+      /* use different function for each data type */
+      switch (data_type) {
+      case CELL_TYPE:
+	break;
+      case FCELL_TYPE:
+	break;
+      case DCELL_TYPE:
+	break;
+      }
+    }
+  }
+}
+
+/*** R
+     # x <- 1:5
+     # f(x)
+     # x[1]
+,*/
+
+#+END_SRC
+
+* TODO Local tests
+* TODO Vignette
+* package management                                               :noexport:
+** check package
+#+begin_src sh :results output
+  CWD=`pwd`
+  R CMD check pkg | sed 's/^*/ */'
+#+end_src
+
+#+results:
+#+begin_example
+ * using log directory ‘/home/rkrug/Documents/Projects/R-Packages/seeddisp/pkg.Rcheck’
+ * using R version 2.13.2 (2011-09-30)
+ * using platform: i686-pc-linux-gnu (32-bit)
+ * using session charset: UTF-8
+ * checking for file ‘DESCRIPTION’ ... OK
+ * checking extension type ... Package
+ * this is package ‘seedDisp’ version ‘0.0-13’
+ * checking package namespace information ... OK
+ * checking package dependencies ... OK
+ * checking if this is a source package ... WARNING
+Subdirectory ‘seedDisp/src’ contains object files.
+ * checking for executable files ... OK
+ * checking whether package ‘seedDisp’ can be installed ... OK
+ * checking installed package size ... OK
+ * checking package directory ... OK
+ * checking for portable file names ... OK
+ * checking for sufficient/correct file permissions ... OK
+ * checking DESCRIPTION meta-information ... OK
+ * checking top-level files ... OK
+ * checking index information ... OK
+ * checking package subdirectories ... WARNING
+Subdirectory 'inst' contains no files.
+ * checking R files for non-ASCII characters ... OK
+ * checking R files for syntax errors ... OK
+ * checking whether the package can be loaded ... OK
+ * checking whether the package can be loaded with stated dependencies ... OK
+ * checking whether the package can be unloaded cleanly ... OK
+ * checking whether the namespace can be loaded with stated dependencies ... OK
+ * checking whether the namespace can be unloaded cleanly ... OK
+ * checking for unstated dependencies in R code ... OK
+ * checking S3 generic/method consistency ... OK
+ * checking replacement functions ... OK
+ * checking foreign function calls ... OK
+ * checking R code for possible problems ... OK
+ * checking Rd files ... OK
+ * checking Rd metadata ... OK
+ * checking Rd cross-references ... OK
+ * checking for missing documentation entries ... WARNING
+Undocumented code objects:
+  waterDisp
+All user-level objects in a package should have documentation entries.
+See the chapter 'Writing R documentation files' in the 'Writing R
+Extensions' manual.
+ * checking for code/documentation mismatches ... WARNING
+Codoc mismatches from documentation object 'birdDispGRASS':
+birdDispGRASS
+  Code: function(input, output = "birdDispSeeds", zeroToNULL = TRUE,
+                 overwrite = FALSE)
+  Docs: function(input, output, overwrite)
+  Argument names in code not in docs:
+    zeroToNULL
+  Mismatches in argument names:
+    Position: 3 Code: zeroToNULL Docs: overwrite
+  Mismatches in argument default values:
+    Name: 'output' Code: "birdDispSeeds" Docs: 
+    Name: 'overwrite' Code: FALSE Docs: 
+
+Codoc mismatches from documentation object 'localDispGRASS':
+localDispGRASS
+  Code: function(input, output = "localDispSeeds", zeroToNULL = TRUE,
+                 overwrite = FALSE)
+  Docs: function(input, output, overwrite)
+  Argument names in code not in docs:
+    zeroToNULL
+  Mismatches in argument names:
+    Position: 3 Code: zeroToNULL Docs: overwrite
+  Mismatches in argument default values:
+    Name: 'output' Code: "localDispSeeds" Docs: 
+    Name: 'overwrite' Code: FALSE Docs: 
+
+Codoc mismatches from documentation object 'waterDispGRASS':
+waterDispGRASS
+  Code: function(input, output = "waterDispSeeds", slope = "slope",
+                 flowdir = "flowdir", depRates, overwrite = FALSE,
+                 zeroToNULL = TRUE, progress = TRUE)
+  Docs: function(input, output = "waterDispSeeds", slope = "SLOPE",
+                 flowdir = "FLOWDIR", overwrite = FALSE)
+  Argument names in code not in docs:
+    depRates zeroToNULL progress
+  Mismatches in argument names:
+    Position: 5 Code: depRates Docs: overwrite
+  Mismatches in argument default values:
+    Name: 'slope' Code: "slope" Docs: "SLOPE"
+    Name: 'flowdir' Code: "flowdir" Docs: "FLOWDIR"
+
+Codoc mismatches from documentation object 'windDisp':
+windDisp
+  Code: function(SD2D, SEEDS, MASK, zeroToNULL)
+  Docs: function(SD2D, SEEDS, MASK)
+  Argument names in code not in docs:
+    zeroToNULL
+
+Codoc mismatches from documentation object 'windDispGRASS':
+windDisp
+  Code: function(SD2D, SEEDS, MASK, zeroToNULL)
+  Docs: function(SD2D, input, output = "windDispSeeds", overwrite =
+                 FALSE)
+  Argument names in code not in docs:
+    SEEDS MASK zeroToNULL
+  Argument names in docs not in code:
+    input output overwrite
+  Mismatches in argument names:
+    Position: 2 Code: SEEDS Docs: input
+    Position: 3 Code: MASK Docs: output
+    Position: 4 Code: zeroToNULL Docs: overwrite
+
+ * checking Rd \usage sections ... WARNING
+Documented arguments not in \usage in documentation object 'waterDispGRASS':
+  depRates
+
+Objects in \usage without \alias in documentation object 'windDispGRASS':
+  windDisp
+
+Functions with \usage entries need to have the appropriate \alias
+entries, and all their arguments documented.
+The \usage entries must correspond to syntactically valid R code.
+See the chapter 'Writing R documentation files' in the 'Writing R
+Extensions' manual.
+ * checking Rd contents ... OK
+ * checking for unstated dependencies in examples ... OK
+ * checking line endings in C/C++/Fortran sources/headers ... OK
+ * checking line endings in Makefiles ... OK
+ * checking for portable compilation flags in Makevars ... OK
+ * checking for portable use of $(BLAS_LIBS) and $(LAPACK_LIBS) ... OK
+ * checking examples ... NONE
+ * checking PDF version of manual ... OK
+WARNING: There were 5 warnings, see
+  ‘/home/rkrug/Documents/Projects/R-Packages/seeddisp/pkg.Rcheck/00check.log’
+for details
+#+end_example
+
+
+
+** INSTALL package
+
+#+begin_src sh :results output :var rckopts="--library=./Rlib"
+  R CMD INSTALL $rckopts pkg
+#+end_src
+
+#+results:
+: g++ -I/usr/share/R/include   -I"/home/rkrug/R/i486-pc-linux-gnu-library/2.13/Rcpp/include"   -fpic  -O3 -pipe  -g -c windDispCpp.cpp -o windDispCpp.o
+: g++ -shared -o seedDisp.so windDispCpp.o -L/home/rkrug/R/i486-pc-linux-gnu-library/2.13/Rcpp/lib -lRcpp -Wl,-rpath,/home/rkrug/R/i486-pc-linux-gnu-library/2.13/Rcpp/lib -L/usr/lib/R/lib -lR
+
+
+** build package
+
+#+begin_src sh :results output
+  R CMD build ./
+#+end_src
+
+#+results:
+
+
+
+** load library
+
+#+begin_src R :session :results output :var libname=(file-name-directory buffer-file-name)
+## customize the next line as needed: 
+.libPaths(new = file.path(getwd(),"Rlib") )
+require( basename(libname), character.only=TRUE)
+#+end_src
+
+#+results:
+
+- this loads the library into an R session
+- customize or delete the =.libPaths= line as desired 
+
+
+: #+begin_src R :session :var libname=(file-name-directory buffer-file-name)
+: .libPaths(new = file.path(getwd(),"Rlib") )
+: require( basename(libname), character.only=TRUE)
+: #+end_src
+
+** grep require( 
+
+- if you keep all your source code in this =.org= document, then you do not
+  need to do this - instead just type =C-s require(=
+- list package dependencies that might need to be dealt with
+
+#+begin_src sh :results output
+grep 'require(' R/*
+#+end_src
+
+: #+begin_src sh :results output
+: grep 'require(' R/*
+: #+end_src
+
+** set up .Rbuildignore and man, R, and Rlib directories
+
+- This document sits in the top level source directory. So, ignore it
+  and its offspring when checking, installing and building.
+- List all files to ignore under =#+results: rbi=  (including this
+  one!). Regular expressions are allowed.
+- Rlib is optional. If you want to INSTALL in the system directory,
+  you own't need it.
+
+: #+results: rbi
+#+results: rbi
+: Rpackage.*
+: PATCHVERSION
+: MAJORVERSION
+: MINORVERSION
+
+Only need to run this once (unless you add more ignorable files).
+
+#+begin_src R :results output silent :var rbld=rbi 
+dir.create("./seedDisp")
+cat(rbld,'\n', file="./.Rbuildignore")
+dir.create("./man")
+dir.create("./R")
+dir.create("./src")
+dir.create("./Rlib")
+#+end_src
+
+: #+begin_src R :results output silent :var rbld=rbi 
+: cat(rbld,'\n', file=".Rbuildignore")
+: dir.create("man")
+: dir.create("R")
+: dir.create("../Rlib")
+: #+end_src
+
+* Package structure and src languages                              :noexport:
+
+- The top level directory may contain these files (and others):
+
+| filename    | filetype      |
+|-------------+---------------|
+| INDEX       | text          |
+| NAMESPACE   | R-like script |
+| configure   | Bourne shell  |
+| cleanup     | Bourne shell  |
+| LICENSE     | text          |
+| LICENCE     | text          |
+| COPYING     | text          |
+| NEWS        | text          |
+| DESCRIPTION | [[http://www.debian.org/doc/debian-policy/ch-controlfields.html][DCF]]           |
+|-------------+---------------|
+
+
+ 
+-  and subdirectories
+| direname | types of files                                   |
+|----------+--------------------------------------------------|
+| R        | R                                                |
+| data     | various                                          |
+| demo     | R                                                |
+| exec     | various                                          |
+| inst     | various                                          |
+| man      | Rd                                               |
+| po       | poEdit                                           |
+| src      | .c, .cc or .cpp, .f, .f90, .f95, .m, .mm, .M, .h |
+| tests    | R, Rout                                          |
+|----------+--------------------------------------------------|
+|          |                                                  |
+   
+ [[info:emacs#Specifying%20File%20Variables][info:emacs#Specifying File Variables]]
