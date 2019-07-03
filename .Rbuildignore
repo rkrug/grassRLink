@@ -12,3 +12,5 @@
 ;; buffer-read-only: t
 ;; eval:: (auto-revert-mode)
 ;; End:
+^.*\.Rproj$
+^\.Rproj\.user$
